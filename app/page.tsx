@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 
 export default function Home() {
   const [wines, setWines] = useState<Array<Wine>>([]);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     fetchWines();
@@ -22,6 +23,27 @@ export default function Home() {
     } catch (error) {
       console.error("Error fetching wines:", error);
     }
+  };
+
+  const filterWines = (wine: Wine) => {
+    if (!search) return true;
+
+    const searchLower = search.toLowerCase();
+    return (
+      (wine.name && wine.name.toLowerCase().includes(searchLower)) ||
+      (wine.region && wine.region.toLowerCase().includes(searchLower)) ||
+      (wine.winery && wine.winery.toLowerCase().includes(searchLower)) ||
+      (wine.grapes &&
+        wine.grapes.some((grape) =>
+          grape.toLowerCase().includes(searchLower),
+        )) ||
+      (wine.tastes &&
+        wine.tastes.some((taste) =>
+          taste.toLowerCase().includes(searchLower),
+        )) ||
+      (wine.foods &&
+        wine.foods.some((food) => food.toLowerCase().includes(searchLower)))
+    );
   };
 
   return (
@@ -59,6 +81,63 @@ export default function Home() {
         </div>
       </section>
 
+      <div className="field has-addons">
+        <div className="control is-expanded">
+          <input
+            className="input"
+            type="text"
+            placeholder="Rechercher un vin..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <div className="control">
+          <button
+            className="button is-light"
+            onClick={() => {
+              setSearch("");
+            }}
+          >
+            Réinitialiser
+          </button>
+        </div>
+      </div>
+
+      <div className="tags">
+        {Array.from(
+          new Set(
+            wines
+              .flatMap((wine) => wine.foods || [])
+              .map((food) => food.toLowerCase()),
+          ),
+        ).map((food) => (
+          <span
+            key={food}
+            className="tag is-clickable"
+            onClick={() => setSearch(food)}
+          >
+            {food}
+          </span>
+        ))}
+      </div>
+      <div className="tags">
+        {Array.from(
+          new Set(
+            wines
+              .flatMap((wine) => wine.grapes || [])
+              .map((grape) => grape.toLowerCase()),
+          ),
+        ).map((grape) => (
+          <span
+            key={grape}
+            className="tag is-clickable"
+            onClick={() => setSearch(grape)}
+          >
+            {grape}
+          </span>
+        ))}
+      </div>
+
       <div className="columns is-multiline">
         <div className="column is-4">
           <div className="box">
@@ -66,7 +145,7 @@ export default function Home() {
           </div>
         </div>
 
-        {wines.map((wine) => (
+        {wines.filter(filterWines).map((wine) => (
           <div key={wine.id} className="column is-4">
             <div className="card">
               <div className="card-content">
