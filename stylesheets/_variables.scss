@@ -1,11 +1,9 @@
-$text: #431212;
-$primary: #bf0606;
+$primary: #7B0323;
 $secondary: #f7f1e3;
 
 @use "bulma/sass" with (
   $family-primary: var(--font-montserrat),
 
-  $text: $text,
   $text-strong: #122443,
   $primary: $primary,
   $title-color: $primary,

@@ -1,44 +1,30 @@
+# Cavavin
+
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/tiste/cavavin&env=API_KEY,MONGO_URI&env-description=API%20Key%20and%20MongoDB%20URI%20for%20the%20application)
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [
-`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## Quick Start
 
-## Getting Started
+Run `npm install` and `npm start` to launch the app.
 
-First, run the development server:
+### Environment
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+First, create the env file: `cp .env{.sample,}` (or `op inject -i .env.sample -o .env`)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+You can now set the values in `.env` file.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+To load them, either you export manually each environment variables of the `.env` file such as: `export API_NAME=...`
+then `npm start`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically
-optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Or you can install `direnv` (`brew install direnv`), and allow sourcing from your current directory with `direnv allow`.
 
-## Learn More
+## Running tests
 
-To learn more about Next.js, take a look at the following resources:
+Run `npm test`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Development
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions
-are welcome!
+You can launch the API in dev mode, with `npm run start:dev`
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use
-the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme)
-from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for
-more details.
+⭐️ Feel free to [contact me](https://tiste.io/contact) if you liked this project, or want to work together.

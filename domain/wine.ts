@@ -14,5 +14,12 @@ export interface Wine {
   color?: string | null;
   tastes: string[];
   foods: string[];
+  structure?: {
+    acidity?: number | null;
+    fizziness?: number | null;
+    sweetness?: number | null;
+    tannin?: number | null;
+    intensity?: number | null;
+  } | null;
   createdAt: string;
 }

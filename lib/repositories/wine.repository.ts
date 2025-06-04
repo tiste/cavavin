@@ -98,47 +98,49 @@ export class WineRepository {
 
     const data = JSON.parse(match[1].trim());
 
+    const pageInformation = data.pageInformation;
     return {
-      name: data.vintage.wine.name,
-      year: data.vintage.year,
+      name: pageInformation.vintage.wine.name,
+      year: pageInformation.vintage.year,
       url: url,
-      tastes: (data.pageInformation.tastes?.flavor || []).flatMap(
-        (f: { primary_keywords: { name: string }[] }) =>
-          (f.primary_keywords || []).flatMap((k) => k.name),
-      ),
-      foods: (data.pageInformation.wine?.foods || []).flatMap(
+      tastes: (pageInformation.tastes?.flavor || [])
+        .filter(
+          (_: { primary_keywords: { name: string }[] }, i: number) => i < 3,
+        )
+        .flatMap((f: { primary_keywords: { name: string }[] }) =>
+          (f.primary_keywords || [])
+            .filter((_, i) => i < 3)
+            .flatMap((k) => k.name),
+        ),
+      foods: (pageInformation.wine?.foods || []).flatMap(
         (f: { name: string }) => f.name,
       ),
-      region: data.vintage.wine.region.name,
-      winery: data.vintage.wine.winery.name,
-      grapes: (data.pageInformation.wine?.grapes || []).flatMap(
+      region: pageInformation.vintage.wine.region.name,
+      winery: pageInformation.vintage.wine.winery.name,
+      grapes: (pageInformation.vintage?.grapes || []).flatMap(
         (g: { name: string }) => g.name,
       ),
-      imageUrl: data.vintage.image.variations.bottle_medium
-        ? "https:" + data.vintage.image.variations.bottle_medium
+      imageUrl: pageInformation.vintage.image.variations.bottle_medium
+        ? "https:" + pageInformation.vintage.image.variations.bottle_medium
         : null,
-
-      //structure: {
-      //         acidity: 4.020963,
-      //         fizziness: null,
-      //         intensity: 4.1428523,
-      //         sweetness: 1.4378586,
-      //         tannin: 3.8542342,
-      //         user_structure_count: 205,
-      //         calculated_structure_count: 126
-      //       },
-
-      // Léger
-      // Puissant
-      //
-      // Souple
-      // Tannique
-      //
-      // Sec
-      // Moelleux
-      //
-      // Doux
-      // Acide
+      color: pageInformation.vintage.wine.style.wine_type_id
+        ? pageInformation.vintage.wine.style.wine_type_id === 1
+          ? "Rouge"
+          : pageInformation.vintage.wine.style.wine_type_id === 2
+            ? "Blanc"
+            : pageInformation.vintage.wine.style.wine_type_id === 3
+              ? "Champagne"
+              : pageInformation.vintage.wine.style.wine_type_id === 4
+                ? "Rosé"
+                : null
+        : null,
+      structure: {
+        acidity: pageInformation.tastes?.structure?.acidity || null,
+        fizziness: pageInformation.tastes?.structure?.fizziness || null,
+        intensity: pageInformation.tastes?.structure?.intensity || null,
+        sweetness: pageInformation.tastes?.structure?.sweetness || null,
+        tannin: pageInformation.tastes?.structure?.tannin || null,
+      },
     };
   }
 

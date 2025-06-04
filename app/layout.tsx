@@ -1,10 +1,18 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "@/stylesheets/main.scss";
 import { montserrat, roboto } from "@/app/fonts";
+import { Nav } from "@/components/Nav";
 
 export const metadata: Metadata = {
   title: "Cavavin",
   description: "",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({
@@ -19,7 +27,8 @@ export default function RootLayout({
       className={`${montserrat.variable} ${roboto.variable}`}
     >
       <body>
-        <div className="container">{children}</div>
+        <Nav />
+        <section className="section">{children}</section>
       </body>
     </html>
   );
