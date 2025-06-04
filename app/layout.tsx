@@ -13,7 +13,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className={`${montserrat.variable} ${roboto.variable}`}>
+    <html
+      lang="fr"
+      data-theme="dark"
+      className={`${montserrat.variable} ${roboto.variable}`}
+    >
       <body>
         <div className="container">{children}</div>
       </body>

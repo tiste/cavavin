@@ -1,17 +1,17 @@
 export interface Wine {
   id: string;
-  name: string;
-  description: string;
-  region: string;
-  year: number;
-  price: number;
-  imageUrl: string;
   url: string;
-  rating: number;
-  appellation: string;
-  variety: string;
   quantity: number;
-  color: string;
+  name?: string | null;
+  description?: string | null;
+  region?: string | null;
+  year?: number | null;
+  price?: number | null;
+  imageUrl?: string | null;
+  rating?: number | null;
+  winery?: string | null;
+  grapes: string[];
+  color?: string | null;
   tastes: string[];
   foods: string[];
   createdAt: string;

@@ -1,5 +1,5 @@
-$text: #122443;
-$primary: #2a6f5b;
+$text: #431212;
+$primary: #bf0606;
 $secondary: #f7f1e3;
 
 @use "bulma/sass" with (
@@ -10,8 +10,6 @@ $secondary: #f7f1e3;
   $primary: $primary,
   $title-color: $primary,
   $content-heading-color: $primary,
-
-  $body-background-color: #fefefe,
 
   $link: $primary
 );

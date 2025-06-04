@@ -2,17 +2,31 @@
 import { useState } from "react";
 import { Wine } from "@/domain/wine";
 
-export function UpsertWine({ wine }: { wine?: Wine }) {
+export function UpsertWine({
+  wine,
+  onSubmit,
+}: {
+  wine?: Wine;
+  onSubmit?: () => Promise<void>;
+}) {
   const [form, setForm] = useState<Partial<Wine>>(wine || {});
+  const [showMoreFields, setShowMoreFields] = useState(false);
 
   function handleChange(
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    name: string,
+    value: string | number | string[],
+    isArray = false,
   ) {
-    const { name, value } = e.target;
-    setForm((f) => ({ ...f, [name]: value }));
+    if (isArray && typeof value === "string") {
+      const arrayValue = value.split(",").map((item) => item.trim());
+      setForm((f) => ({ ...f, [name]: arrayValue }));
+    } else {
+      setForm((f) => ({ ...f, [name]: value }));
+    }
   }
 
-  async function handleSubmit() {
+  async function handleSubmit(e: React.MouseEvent<HTMLButtonElement>) {
+    e.preventDefault();
     const response = await fetch(`/api/wines${form.id ? "/" + form.id : ""}`, {
       method: form.id ? "PUT" : "POST",
       headers: {
@@ -22,16 +36,19 @@ export function UpsertWine({ wine }: { wine?: Wine }) {
     });
 
     if (response.ok) {
-      setForm({});
-      alert("Wine saved successfully!");
-    } else {
-      alert("Failed to save wine.");
+      if (onSubmit) {
+        onSubmit().then(() => {
+          if (!form.id) {
+            setForm({});
+          }
+          setShowMoreFields(false);
+        });
+      }
     }
   }
 
   return (
-    <form className="box" style={{ maxWidth: 600, margin: "2rem auto" }}>
-      <h2 className="title is-4">{form.id ? "Edit Wine" : "Add Wine"}</h2>
+    <form>
       <input type="hidden" name="id" value={form.id || ""} />
       <input
         type="hidden"
@@ -40,184 +57,212 @@ export function UpsertWine({ wine }: { wine?: Wine }) {
       />
 
       <div className="field">
-        <label className="label">Name</label>
-        <div className="control">
-          <input
-            className="input"
-            name="name"
-            value={form.name || ""}
-            onChange={handleChange}
-            required
-          />
-        </div>
-      </div>
-
-      <div className="field">
-        <label className="label">Description</label>
-        <div className="control">
-          <textarea
-            className="textarea"
-            name="description"
-            value={form.description || ""}
-            onChange={handleChange}
-            required
-          />
-        </div>
-      </div>
-
-      <div className="field">
-        <label className="label">Region</label>
-        <div className="control">
-          <input
-            className="input"
-            name="region"
-            value={form.region || ""}
-            onChange={handleChange}
-          />
-        </div>
-      </div>
-
-      <div className="field">
-        <label className="label">Year</label>
-        <div className="control">
-          <input
-            className="input"
-            type="number"
-            name="year"
-            value={form.year || ""}
-            onChange={handleChange}
-          />
-        </div>
-      </div>
-
-      <div className="field">
-        <label className="label">Price (€)</label>
-        <div className="control">
-          <input
-            className="input"
-            type="number"
-            step="0.01"
-            name="price"
-            value={form.price || ""}
-            onChange={handleChange}
-          />
-        </div>
-      </div>
-
-      <div className="field">
-        <label className="label">Image URL</label>
-        <div className="control">
-          <input
-            className="input"
-            name="imageUrl"
-            value={form.imageUrl || ""}
-            onChange={handleChange}
-          />
-        </div>
-      </div>
-
-      <div className="field">
-        <label className="label">URL</label>
+        <label className="label">Lien</label>
         <div className="control">
           <input
             className="input"
             name="url"
             value={form.url || ""}
-            onChange={handleChange}
+            onChange={(e) => handleChange(e.target.name, e.target.value)}
           />
         </div>
       </div>
 
-      <div className="field">
-        <label className="label">Rating</label>
-        <div className="control">
-          <input
-            className="input"
-            type="number"
-            name="rating"
-            value={form.rating || ""}
-            onChange={handleChange}
-          />
-        </div>
-      </div>
+      {showMoreFields && (
+        <>
+          <div className="field">
+            <label className="label">Quantité</label>
+            <div className="control">
+              <input
+                className="input"
+                type="number"
+                name="quantity"
+                value={form.quantity || ""}
+                onChange={(e) =>
+                  handleChange(e.target.name, Number(e.target.value))
+                }
+              />
+            </div>
+          </div>
+
+          <div className="field">
+            <label className="label">Nom</label>
+            <div className="control">
+              <input
+                className="input"
+                name="name"
+                value={form.name || ""}
+                onChange={(e) => handleChange(e.target.name, e.target.value)}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="field">
+            <label className="label">Description</label>
+            <div className="control">
+              <textarea
+                className="textarea"
+                name="description"
+                value={form.description || ""}
+                onChange={(e) => handleChange(e.target.name, e.target.value)}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="field">
+            <label className="label">Région</label>
+            <div className="control">
+              <input
+                className="input"
+                name="region"
+                value={form.region || ""}
+                onChange={(e) => handleChange(e.target.name, e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="field">
+            <label className="label">Millésime</label>
+            <div className="control">
+              <input
+                className="input"
+                type="number"
+                name="year"
+                value={form.year || ""}
+                onChange={(e) =>
+                  handleChange(e.target.name, Number(e.target.value))
+                }
+              />
+            </div>
+          </div>
+
+          <div className="field">
+            <label className="label">Prix (€)</label>
+            <div className="control">
+              <input
+                className="input"
+                type="number"
+                step="0.01"
+                name="price"
+                value={form.price || ""}
+                onChange={(e) =>
+                  handleChange(e.target.name, Number(e.target.value))
+                }
+              />
+            </div>
+          </div>
+
+          <div className="field">
+            <label className="label">Image</label>
+            <div className="control">
+              <input
+                className="input"
+                name="imageUrl"
+                value={form.imageUrl || ""}
+                onChange={(e) => handleChange(e.target.name, e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="field">
+            <label className="label">Note</label>
+            <div className="control">
+              <input
+                className="input"
+                type="number"
+                name="rating"
+                value={form.rating || ""}
+                onChange={(e) => handleChange(e.target.name, e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="field">
+            <label className="label">Appellation</label>
+            <div className="control">
+              <input
+                className="input"
+                name="winery"
+                value={form.winery || ""}
+                onChange={(e) => handleChange(e.target.name, e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="field">
+            <label className="label">Cépages</label>
+            <div className="control">
+              <input
+                className="input"
+                name="grapes"
+                value={form.grapes?.join(", ") || ""}
+                onChange={(e) =>
+                  handleChange(e.target.name, e.target.value, true)
+                }
+              />
+            </div>
+          </div>
+
+          <div className="field">
+            <label className="label">Couleur</label>
+            <div className="control">
+              <input
+                className="input"
+                name="color"
+                value={form.color || ""}
+                onChange={(e) => handleChange(e.target.name, e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="field">
+            <label className="label">Goûts</label>
+            <div className="control">
+              <input
+                className="input"
+                name="tastes"
+                value={form.tastes?.join(", ") || ""}
+                onChange={(e) =>
+                  handleChange(e.target.name, e.target.value, true)
+                }
+              />
+            </div>
+          </div>
+
+          <div className="field">
+            <label className="label">Plats</label>
+            <div className="control">
+              <input
+                className="input"
+                name="foods"
+                value={form.foods?.join(", ") || ""}
+                onChange={(e) =>
+                  handleChange(e.target.name, e.target.value, true)
+                }
+              />
+            </div>
+          </div>
+        </>
+      )}
 
       <div className="field">
-        <label className="label">Appellation</label>
         <div className="control">
-          <input
-            className="input"
-            name="appellation"
-            value={form.appellation || ""}
-            onChange={handleChange}
-          />
-        </div>
-      </div>
-
-      <div className="field">
-        <label className="label">Variety</label>
-        <div className="control">
-          <input
-            className="input"
-            name="variety"
-            value={form.variety || ""}
-            onChange={handleChange}
-          />
-        </div>
-      </div>
-
-      <div className="field">
-        <label className="label">Quantity</label>
-        <div className="control">
-          <input
-            className="input"
-            type="number"
-            name="quantity"
-            value={form.quantity || ""}
-            onChange={handleChange}
-          />
-        </div>
-      </div>
-
-      <div className="field">
-        <label className="label">Color</label>
-        <div className="control">
-          <input
-            className="input"
-            name="color"
-            value={form.color || ""}
-            onChange={handleChange}
-          />
-        </div>
-      </div>
-
-      <div className="field">
-        <label className="label">Tastes (comma separated)</label>
-        <div className="control">
-          <input
-            className="input"
-            name="tastes"
-            value={form.tastes?.join(", ") || ""}
-            onChange={handleChange}
-          />
-        </div>
-      </div>
-
-      <div className="field">
-        <label className="label">Foods (comma separated)</label>
-        <div className="control">
-          <input
-            className="input"
-            name="foods"
-            value={form.foods?.join(", ") || ""}
-            onChange={handleChange}
-          />
+          <button
+            type="button"
+            className="button is-link is-outlined"
+            onClick={() => setShowMoreFields(!showMoreFields)}
+          >
+            {showMoreFields ? "Moins de champs" : "Plus de champs"}
+          </button>
         </div>
       </div>
 
       <div className="field is-grouped">
         <div className="control">
           <button className="button is-primary" onClick={handleSubmit}>
-            {form.id ? "Update" : "Create"}
+            {form.id ? "Mettre à jour" : "Créer"}
           </button>
         </div>
       </div>
