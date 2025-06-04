@@ -93,7 +93,7 @@ export default function Home() {
         </div>
         <div className="control">
           <button
-            className="button is-light"
+            className="button"
             onClick={() => {
               setSearch("");
             }}
@@ -154,7 +154,7 @@ export default function Home() {
                 </h2>
 
                 <div className="columns">
-                  {wine.imageUrl !== null && (
+                  {wine.imageUrl && (
                     <div className="column is-3">
                       <img src={wine.imageUrl} alt={wine.name || ""} />
                     </div>

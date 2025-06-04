@@ -72,6 +72,19 @@ export class WineRepository {
     });
   }
 
+  async refresh() {
+    const wines = await this.getAll();
+
+    const updates = wines.map(async (wine) => {
+      const updatedWine = await this.getWineFromUrl(wine.url);
+      if (updatedWine) {
+        await this.update(wine.id, { ...wine, ...updatedWine });
+      }
+    });
+
+    await Promise.all(updates);
+  }
+
   private async getWineFromUrl(url: string): Promise<Partial<Wine> | null> {
     const response = await fetch(url);
     if (!response.ok) {

@@ -11,6 +11,7 @@ export function UpsertWine({
 }) {
   const [form, setForm] = useState<Partial<Wine>>(wine || {});
   const [showMoreFields, setShowMoreFields] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   function handleChange(
     name: string,
@@ -27,6 +28,7 @@ export function UpsertWine({
 
   async function handleSubmit(e: React.MouseEvent<HTMLButtonElement>) {
     e.preventDefault();
+    setIsLoading(true);
     const response = await fetch(`/api/wines${form.id ? "/" + form.id : ""}`, {
       method: form.id ? "PUT" : "POST",
       headers: {
@@ -42,7 +44,21 @@ export function UpsertWine({
             setForm({});
           }
           setShowMoreFields(false);
+          setIsLoading(false);
         });
+      }
+    }
+  }
+
+  async function refreshWines() {
+    setIsLoading(true);
+    const response = await fetch("/api/wines/refresh", {
+      method: "POST",
+    });
+    if (response.ok) {
+      if (onSubmit) {
+        onSubmit();
+        setIsLoading(false);
       }
     }
   }
@@ -259,13 +275,32 @@ export function UpsertWine({
         </div>
       </div>
 
-      <div className="field is-grouped">
+      <div className="field">
         <div className="control">
-          <button className="button is-primary" onClick={handleSubmit}>
+          <button
+            className={"button is-primary" + (isLoading ? " is-loading" : "")}
+            onClick={handleSubmit}
+          >
             {form.id ? "Mettre à jour" : "Créer"}
           </button>
         </div>
       </div>
+
+      {!form.id && (
+        <div className="field">
+          <div className="control">
+            <button
+              type="button"
+              className={
+                "button is-secondary" + (isLoading ? " is-loading" : "")
+              }
+              onClick={refreshWines}
+            >
+              Rafraîchir les vins
+            </button>
+          </div>
+        </div>
+      )}
     </form>
   );
 }
