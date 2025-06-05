@@ -5,14 +5,56 @@ import { Wine } from "@/domain/wine";
 import { useEffect, useState } from "react";
 import placeholderImage from "@/public/placeholder.png";
 import { Progress } from "@/components/Progress";
+import { isEmpty } from "lodash";
+
+interface Search {
+  color: string;
+  food: string;
+  grape: string;
+  taste: string;
+  sweetness: null;
+  tannin: null | boolean;
+  acidity: null | boolean;
+  fizziness: null | boolean;
+  intensity: null | boolean;
+  search: string;
+}
+
+function isStructureMatch(filter: null | boolean, structure?: number | null) {
+  console.log(filter, structure);
+  if (filter === null) return true;
+  if (structure === null || structure === undefined) return false;
+  if (structure < 5 && filter === true) return true;
+  if (structure >= 5 && filter === false) return true;
+  return false;
+}
+
+const initialState: Search = {
+  color: "",
+  food: "",
+  grape: "",
+  taste: "",
+  sweetness: null,
+  tannin: null,
+  acidity: null,
+  fizziness: null,
+  intensity: null,
+  search: "",
+};
 
 export default function Home() {
   const [wines, setWines] = useState<Array<Wine>>([]);
-  const [search, setSearch] = useState("");
+  const [filters, setFilters] = useState(initialState);
+  const [filteredWines, setFilteredWines] = useState<Array<Wine>>([]);
 
   useEffect(() => {
     fetchWines();
   }, []);
+
+  useEffect(() => {
+    const filtered = wines.filter(filterWines);
+    setFilteredWines(filtered);
+  }, [wines, filters]);
 
   const fetchWines = async () => {
     try {
@@ -34,23 +76,52 @@ export default function Home() {
       .replace(/[\u0300-\u036f]/g, "");
 
   const filterWines = (wine: Wine) => {
-    if (!search) return true;
+    if (
+      filters.acidity === null &&
+      filters.fizziness === null &&
+      filters.intensity === null &&
+      filters.sweetness === null &&
+      filters.tannin === null &&
+      isEmpty(filters.search) &&
+      isEmpty(filters.color) &&
+      isEmpty(filters.food) &&
+      isEmpty(filters.taste) &&
+      isEmpty(filters.grape)
+    ) {
+      return true;
+    }
 
-    const searchNorm = normalize(search);
+    const searchNorm = normalize(filters.search);
+    const tasteNorm = normalize(filters.taste);
+    const foodNorm = normalize(filters.food);
+    const grapeNorm = normalize(filters.grape);
+    const colorNorm = normalize(filters.color);
 
     return (
       (wine.name && normalize(wine.name).includes(searchNorm)) ||
       (wine.description && normalize(wine.description).includes(searchNorm)) ||
       (wine.region && normalize(wine.region).includes(searchNorm)) ||
-      (wine.color && normalize(wine.color).includes(searchNorm)) ||
       (wine.winery && normalize(wine.winery).includes(searchNorm)) ||
+      (wine.color && normalize(wine.color).includes(colorNorm)) ||
       (wine.grapes &&
-        wine.grapes.some((grape) => normalize(grape).includes(searchNorm))) ||
+        wine.grapes.some((grape) => normalize(grape).includes(grapeNorm))) ||
       (wine.tastes &&
-        wine.tastes.some((taste) => normalize(taste).includes(searchNorm))) ||
+        wine.tastes.some((taste) => normalize(taste).includes(tasteNorm))) ||
       (wine.foods &&
-        wine.foods.some((food) => normalize(food).includes(searchNorm)))
+        wine.foods.some((food) => normalize(food).includes(foodNorm))) ||
+      isStructureMatch(filters.acidity, wine.structure?.acidity) ||
+      isStructureMatch(filters.fizziness, wine.structure?.fizziness) ||
+      isStructureMatch(filters.intensity, wine.structure?.intensity) ||
+      isStructureMatch(filters.sweetness, wine.structure?.sweetness) ||
+      isStructureMatch(filters.tannin, wine.structure?.tannin)
     );
+  };
+
+  const handleFilterChange = (key: keyof Search, value: string | null) => {
+    setFilters((prevFilters) => ({
+      ...prevFilters,
+      [key]: filters[key] === value ? initialState[key] : value,
+    }));
   };
 
   return (
@@ -64,6 +135,7 @@ export default function Home() {
                 <p className="title">
                   {wines.reduce((acc, wine) => acc + (wine.quantity || 0), 0)}
                 </p>
+                {JSON.stringify(filters)}
               </div>
             </div>
             <div className="level-item has-text-centered">
@@ -107,15 +179,15 @@ export default function Home() {
             className="input"
             type="text"
             placeholder="Rechercher un vin..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            value={filters.search}
+            onChange={(e) => handleFilterChange("search", e.target.value)}
           />
         </div>
         <div className="control">
           <button
             className="button"
             onClick={() => {
-              setSearch("");
+              setFilters(initialState);
             }}
           >
             Réinitialiser
@@ -128,15 +200,21 @@ export default function Home() {
           new Set(
             wines.map((wine) => wine.color?.toLowerCase()).filter(Boolean),
           ),
-        ).map((color) => (
-          <span
-            key={color}
-            className="tag is-clickable is-primary"
-            onClick={() => setSearch(color || "")}
-          >
-            {color}
-          </span>
-        ))}
+        ).map(
+          (color) =>
+            color && (
+              <span
+                key={color}
+                className={
+                  "tag is-clickable is-primary" +
+                  (color === filters.color ? " is-bordered" : "")
+                }
+                onClick={() => handleFilterChange("color", color)}
+              >
+                {color}
+              </span>
+            ),
+        )}
 
         {Array.from(
           new Set(
@@ -147,8 +225,10 @@ export default function Home() {
         ).map((food) => (
           <span
             key={food}
-            className="tag is-clickable"
-            onClick={() => setSearch(food)}
+            className={
+              "tag is-clickable" + (food === filters.food ? " is-bordered" : "")
+            }
+            onClick={() => handleFilterChange("food", food)}
           >
             {food}
           </span>
@@ -163,8 +243,11 @@ export default function Home() {
         ).map((grape) => (
           <span
             key={grape}
-            className="tag is-clickable is-dark"
-            onClick={() => setSearch(grape)}
+            className={
+              "tag is-clickable is-dark" +
+              (grape === filters.grape ? " is-bordered" : "")
+            }
+            onClick={() => handleFilterChange("grape", grape)}
           >
             {grape}
           </span>
@@ -172,7 +255,7 @@ export default function Home() {
       </div>
 
       <div className="columns is-multiline">
-        {wines.filter(filterWines).map((wine) => (
+        {filteredWines.map((wine) => (
           <div key={wine.id} className="column is-4">
             <div className="card">
               <div className="card-content">

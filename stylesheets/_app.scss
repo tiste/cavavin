@@ -1,2 +1,6 @@
 @use "bulma/sass/utilities/mixins";
 @use "_variables" as var;
+
+.is-bordered {
+  border: 1px solid white;
+}
