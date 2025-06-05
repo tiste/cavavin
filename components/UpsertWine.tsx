@@ -122,13 +122,6 @@ export function UpsertWine({
       <div className="modal-card">
         <section className="modal-card-body">
           <form>
-            <input type="hidden" name="id" value={form.id || ""} />
-            <input
-              type="hidden"
-              name="createdAt"
-              value={form.createdAt || new Date().toISOString()}
-            />
-
             <div className="field">
               <label className="label">Lien</label>
               <div className="control">

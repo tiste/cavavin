@@ -62,12 +62,15 @@ export default function Home() {
     <div>
       <section className="hero">
         <div className="hero-body has-text-centered">
-          <nav className="level">
+          <nav className="level is-mobile">
             <div className="level-item has-text-centered">
               <div>
                 <p className="heading">Quantité</p>
                 <p className="title">
-                  {wines.reduce((acc, wine) => acc + (wine.quantity || 0), 0)}
+                  {filteredWines.reduce(
+                    (acc, wine) => acc + (wine.quantity || 0),
+                    0,
+                  )}
                 </p>
               </div>
             </div>
@@ -75,7 +78,7 @@ export default function Home() {
               <div>
                 <p className="heading">Prix total</p>
                 <p className="title">
-                  {wines
+                  {filteredWines
                     .reduce(
                       (acc, wine) =>
                         acc + (wine.price || 0) * (wine.quantity || 0),
@@ -83,22 +86,6 @@ export default function Home() {
                     )
                     .toFixed(2)}{" "}
                   €
-                </p>
-              </div>
-            </div>
-            <div className="level-item has-text-centered">
-              <div>
-                <p className="heading">Dernière mise à jour</p>
-                <p className="title">
-                  {wines.length > 0
-                    ? new Date(
-                        Math.max(
-                          ...wines.map((wine) =>
-                            new Date(wine.createdAt).getTime(),
-                          ),
-                        ),
-                      ).toLocaleDateString("fr-FR")
-                    : "Aucune"}
                 </p>
               </div>
             </div>
@@ -196,7 +183,7 @@ export default function Home() {
                 checked={filters.intensity === true}
                 onChange={() => handleFilterChange("intensity", true)}
               />
-              <small> Léger</small>
+              <span> Léger</span>
             </label>
           </div>
           <div className="control">
@@ -206,7 +193,7 @@ export default function Home() {
                 checked={filters.intensity === false}
                 onChange={() => handleFilterChange("intensity", false)}
               />
-              <small> Puissant</small>
+              <span> Puissant</span>
             </label>
           </div>
         </div>
@@ -219,7 +206,7 @@ export default function Home() {
                 checked={filters.tannin === true}
                 onChange={() => handleFilterChange("tannin", true)}
               />
-              <small> Souple</small>
+              <span> Souple</span>
             </label>
           </div>
           <div className="control">
@@ -229,7 +216,7 @@ export default function Home() {
                 checked={filters.tannin === false}
                 onChange={() => handleFilterChange("tannin", false)}
               />
-              <small> Tannique</small>
+              <span> Tannique</span>
             </label>
           </div>
         </div>
@@ -242,7 +229,7 @@ export default function Home() {
                 checked={filters.sweetness === true}
                 onChange={() => handleFilterChange("sweetness", true)}
               />
-              <small> Sec</small>
+              <span> Sec</span>
             </label>
           </div>
           <div className="control">
@@ -252,7 +239,7 @@ export default function Home() {
                 checked={filters.sweetness === false}
                 onChange={() => handleFilterChange("sweetness", false)}
               />
-              <small> Moelleux</small>
+              <span> Moelleux</span>
             </label>
           </div>
         </div>
@@ -265,7 +252,7 @@ export default function Home() {
                 checked={filters.acidity === true}
                 onChange={() => handleFilterChange("acidity", true)}
               />
-              <small> Doux</small>
+              <span> Doux</span>
             </label>
           </div>
           <div className="control">
@@ -275,7 +262,7 @@ export default function Home() {
                 checked={filters.acidity === false}
                 onChange={() => handleFilterChange("acidity", false)}
               />
-              <small> Acide</small>
+              <span> Acide</span>
             </label>
           </div>
         </div>
@@ -288,7 +275,7 @@ export default function Home() {
                 checked={filters.fizziness === true}
                 onChange={() => handleFilterChange("fizziness", true)}
               />
-              <small> Plat</small>
+              <span> Plat</span>
             </label>
           </div>
           <div className="control">
@@ -298,7 +285,7 @@ export default function Home() {
                 checked={filters.fizziness === false}
                 onChange={() => handleFilterChange("fizziness", false)}
               />
-              <small> Pétillant</small>
+              <span> Pétillant</span>
             </label>
           </div>
         </div>
@@ -311,7 +298,7 @@ export default function Home() {
               <div className="card-content">
                 <h2 className="title is-4">
                   <a href={wine.url} target="_blank" rel="noopener noreferrer">
-                    {wine.name} ({wine.quantity})
+                    {wine.name} {wine.year} ({wine.quantity})
                   </a>
                 </h2>
 
@@ -348,10 +335,6 @@ export default function Home() {
                       <p>
                         <strong>Appellation : </strong>
                         {wine.winery}
-                      </p>
-                      <p>
-                        <strong>Millésime : </strong>
-                        {wine.year}
                       </p>
                       <p>
                         <strong>Région : </strong>
@@ -415,6 +398,11 @@ export default function Home() {
                     </div>
 
                     <UpsertWine wine={wine} onSubmit={fetchWines} />
+
+                    <p className="is-size-7 has-text-right">
+                      Dernière mise à jour :{" "}
+                      {new Date(wine.updatedAt).toLocaleString("fr-FR")}
+                    </p>
                   </div>
                 </div>
               </div>

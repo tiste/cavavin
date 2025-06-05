@@ -21,6 +21,7 @@ export class WineRepository {
     const wines = await this.mongo.db
       .collection<Wine>("wines")
       .find({})
+      .sort({ createdAt: -1 })
       .toArray();
 
     return wines.map((wine) => this.mapWine(wine));
@@ -51,16 +52,22 @@ export class WineRepository {
       quantity: wine.quantity || 0,
       id: nanoid(),
       createdAt: new Date() as unknown as string,
+      updatedAt: new Date() as unknown as string,
     });
   }
 
-  async update(id: string, r: Wine) {
+  async update(id: string, { updatedAt: _, ...wine }: Wine) {
     await this.mongo.db.collection<Wine>("wines").updateOne(
       {
         id: id,
       },
       {
-        $set: { ...r, createdAt: new Date(r.createdAt) as unknown as string },
+        $set: {
+          ...wine,
+          createdAt: new Date(wine.createdAt) as unknown as string,
+        },
+        // @ts-ignore
+        $currentDate: { updatedAt: true },
       },
       { upsert: true },
     );
@@ -147,7 +154,8 @@ export class WineRepository {
   private mapWine({ _id: _, ...wine }: WithId<Wine>): Wine {
     return {
       ...wine,
-      createdAt: dayjs(wine.createdAt).format("YYYY-MM-DD"),
+      createdAt: dayjs(wine.createdAt).toISOString(),
+      updatedAt: dayjs(wine.updatedAt).toISOString(),
     };
   }
 }

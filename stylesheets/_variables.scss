@@ -1,9 +1,7 @@
-$primary: #7B0323;
-$secondary: #f7f1e3;
+$primary: #ae2042;
 
 @use "bulma/sass" with (
   $family-primary: var(--font-montserrat),
-
   $text-strong: #122443,
   $primary: $primary,
   $title-color: $primary,
@@ -11,3 +9,7 @@ $secondary: #f7f1e3;
 
   $link: $primary
 );
+
+:root {
+  --bulma-link-text: $primary;
+}

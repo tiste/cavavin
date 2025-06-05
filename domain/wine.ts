@@ -21,5 +21,6 @@ export interface Wine {
     tannin?: number | null;
     intensity?: number | null;
   } | null;
+  updatedAt: string;
   createdAt: string;
 }
