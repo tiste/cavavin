@@ -5,29 +5,8 @@ import { Wine } from "@/domain/wine";
 import { useEffect, useState } from "react";
 import placeholderImage from "@/public/placeholder.png";
 import { Progress } from "@/components/Progress";
-import { isEmpty } from "lodash";
-
-interface Search {
-  color: string;
-  food: string;
-  grape: string;
-  taste: string;
-  sweetness: null;
-  tannin: null | boolean;
-  acidity: null | boolean;
-  fizziness: null | boolean;
-  intensity: null | boolean;
-  search: string;
-}
-
-function isStructureMatch(filter: null | boolean, structure?: number | null) {
-  console.log(filter, structure);
-  if (filter === null) return true;
-  if (structure === null || structure === undefined) return false;
-  if (structure < 5 && filter === true) return true;
-  if (structure >= 5 && filter === false) return true;
-  return false;
-}
+import { Search } from "@/domain/search";
+import { filterWines } from "@/lib/search";
 
 const initialState: Search = {
   color: "",
@@ -52,7 +31,7 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    const filtered = wines.filter(filterWines);
+    const filtered = wines.filter((w) => filterWines(w, filters));
     setFilteredWines(filtered);
   }, [wines, filters]);
 
@@ -69,55 +48,10 @@ export default function Home() {
     }
   };
 
-  const normalize = (str: string) =>
-    str
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "");
-
-  const filterWines = (wine: Wine) => {
-    if (
-      filters.acidity === null &&
-      filters.fizziness === null &&
-      filters.intensity === null &&
-      filters.sweetness === null &&
-      filters.tannin === null &&
-      isEmpty(filters.search) &&
-      isEmpty(filters.color) &&
-      isEmpty(filters.food) &&
-      isEmpty(filters.taste) &&
-      isEmpty(filters.grape)
-    ) {
-      return true;
-    }
-
-    const searchNorm = normalize(filters.search);
-    const tasteNorm = normalize(filters.taste);
-    const foodNorm = normalize(filters.food);
-    const grapeNorm = normalize(filters.grape);
-    const colorNorm = normalize(filters.color);
-
-    return (
-      (wine.name && normalize(wine.name).includes(searchNorm)) ||
-      (wine.description && normalize(wine.description).includes(searchNorm)) ||
-      (wine.region && normalize(wine.region).includes(searchNorm)) ||
-      (wine.winery && normalize(wine.winery).includes(searchNorm)) ||
-      (wine.color && normalize(wine.color).includes(colorNorm)) ||
-      (wine.grapes &&
-        wine.grapes.some((grape) => normalize(grape).includes(grapeNorm))) ||
-      (wine.tastes &&
-        wine.tastes.some((taste) => normalize(taste).includes(tasteNorm))) ||
-      (wine.foods &&
-        wine.foods.some((food) => normalize(food).includes(foodNorm))) ||
-      isStructureMatch(filters.acidity, wine.structure?.acidity) ||
-      isStructureMatch(filters.fizziness, wine.structure?.fizziness) ||
-      isStructureMatch(filters.intensity, wine.structure?.intensity) ||
-      isStructureMatch(filters.sweetness, wine.structure?.sweetness) ||
-      isStructureMatch(filters.tannin, wine.structure?.tannin)
-    );
-  };
-
-  const handleFilterChange = (key: keyof Search, value: string | null) => {
+  const handleFilterChange = (
+    key: keyof Search,
+    value: string | null | boolean,
+  ) => {
     setFilters((prevFilters) => ({
       ...prevFilters,
       [key]: filters[key] === value ? initialState[key] : value,
@@ -135,7 +69,6 @@ export default function Home() {
                 <p className="title">
                   {wines.reduce((acc, wine) => acc + (wine.quantity || 0), 0)}
                 </p>
-                {JSON.stringify(filters)}
               </div>
             </div>
             <div className="level-item has-text-centered">
@@ -252,6 +185,123 @@ export default function Home() {
             {grape}
           </span>
         ))}
+      </div>
+
+      <div className="columns is-multiline is-mobile">
+        <div className="column">
+          <div className="control">
+            <label className="checkbox">
+              <input
+                type="checkbox"
+                checked={filters.intensity === true}
+                onChange={() => handleFilterChange("intensity", true)}
+              />
+              <small> Léger</small>
+            </label>
+          </div>
+          <div className="control">
+            <label className="checkbox">
+              <input
+                type="checkbox"
+                checked={filters.intensity === false}
+                onChange={() => handleFilterChange("intensity", false)}
+              />
+              <small> Puissant</small>
+            </label>
+          </div>
+        </div>
+
+        <div className="column">
+          <div className="control">
+            <label className="checkbox">
+              <input
+                type="checkbox"
+                checked={filters.tannin === true}
+                onChange={() => handleFilterChange("tannin", true)}
+              />
+              <small> Souple</small>
+            </label>
+          </div>
+          <div className="control">
+            <label className="checkbox">
+              <input
+                type="checkbox"
+                checked={filters.tannin === false}
+                onChange={() => handleFilterChange("tannin", false)}
+              />
+              <small> Tannique</small>
+            </label>
+          </div>
+        </div>
+
+        <div className="column">
+          <div className="control">
+            <label className="checkbox">
+              <input
+                type="checkbox"
+                checked={filters.sweetness === true}
+                onChange={() => handleFilterChange("sweetness", true)}
+              />
+              <small> Sec</small>
+            </label>
+          </div>
+          <div className="control">
+            <label className="checkbox">
+              <input
+                type="checkbox"
+                checked={filters.sweetness === false}
+                onChange={() => handleFilterChange("sweetness", false)}
+              />
+              <small> Moelleux</small>
+            </label>
+          </div>
+        </div>
+
+        <div className="column">
+          <div className="control">
+            <label className="checkbox">
+              <input
+                type="checkbox"
+                checked={filters.acidity === true}
+                onChange={() => handleFilterChange("acidity", true)}
+              />
+              <small> Doux</small>
+            </label>
+          </div>
+          <div className="control">
+            <label className="checkbox">
+              <input
+                type="checkbox"
+                checked={filters.acidity === false}
+                onChange={() => handleFilterChange("acidity", false)}
+              />
+              <small> Acide</small>
+            </label>
+          </div>
+        </div>
+
+        <div className="column">
+          <div className="control">
+            <label className="checkbox">
+              <input
+                type="checkbox"
+                checked={filters.fizziness === true}
+                onChange={() => handleFilterChange("fizziness", true)}
+              />
+              <small> Plat</small>
+            </label>
+          </div>
+          <div className="control">
+            <label className="checkbox">
+              <input
+                type="checkbox"
+                checked={filters.fizziness === false}
+                onChange={() => handleFilterChange("fizziness", false)}
+              />
+              <small> Pétillant</small>
+            </label>
+          </div>
+        </div>
       </div>
 
       <div className="columns is-multiline">

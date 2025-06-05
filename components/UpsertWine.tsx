@@ -80,6 +80,10 @@ export function UpsertWine({
   }
 
   async function refreshWines() {
+    if (!confirm("Êtes-vous sûr de vouloir rafraîchir les vins ?")) {
+      return;
+    }
+
     setIsLoading(true);
     const response = await fetch("/api/wines/refresh", {
       method: "POST",
