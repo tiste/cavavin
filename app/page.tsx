@@ -7,6 +7,8 @@ import placeholderImage from "@/public/placeholder.png";
 import { Progress } from "@/components/Progress";
 import { Search } from "@/domain/search";
 import { filterWines } from "@/lib/search";
+import { countBy, orderBy, toPairs } from "lodash";
+import { ShowMoreTags } from "@/components/ShowMoreTags";
 
 const initialState: Search = {
   color: "",
@@ -116,62 +118,49 @@ export default function Home() {
       </div>
 
       <div className="tags">
-        {Array.from(
-          new Set(
-            wines.map((wine) => wine.color?.toLowerCase()).filter(Boolean),
-          ),
-        ).map(
-          (color) =>
-            color && (
-              <span
-                key={color}
-                className={
-                  "tag is-clickable is-primary" +
-                  (color === filters.color ? " is-bordered" : "")
-                }
-                onClick={() => handleFilterChange("color", color)}
-              >
-                {color}
-              </span>
+        <ShowMoreTags
+          tags={orderBy(
+            toPairs(countBy(wines, (wine) => wine.color?.toLowerCase())),
+            ([, count]) => count,
+            "desc",
+          ).map(([color]) => color)}
+          selected={filters.color}
+          onSelect={(color) => handleFilterChange("color", color)}
+          className="is-primary"
+        />
+
+        <ShowMoreTags
+          tags={orderBy(
+            toPairs(
+              countBy(
+                wines
+                  .flatMap((wine) => wine.foods || [])
+                  .map((food) => food.toLowerCase()),
+              ),
             ),
-        )}
+            ([, count]) => count,
+            "desc",
+          ).map(([food]) => food)}
+          selected={filters.food}
+          onSelect={(food) => handleFilterChange("food", food)}
+        />
 
-        {Array.from(
-          new Set(
-            wines
-              .flatMap((wine) => wine.foods || [])
-              .map((food) => food.toLowerCase()),
-          ),
-        ).map((food) => (
-          <span
-            key={food}
-            className={
-              "tag is-clickable" + (food === filters.food ? " is-bordered" : "")
-            }
-            onClick={() => handleFilterChange("food", food)}
-          >
-            {food}
-          </span>
-        ))}
-
-        {Array.from(
-          new Set(
-            wines
-              .flatMap((wine) => wine.grapes || [])
-              .map((grape) => grape.toLowerCase()),
-          ),
-        ).map((grape) => (
-          <span
-            key={grape}
-            className={
-              "tag is-clickable is-dark" +
-              (grape === filters.grape ? " is-bordered" : "")
-            }
-            onClick={() => handleFilterChange("grape", grape)}
-          >
-            {grape}
-          </span>
-        ))}
+        <ShowMoreTags
+          tags={orderBy(
+            toPairs(
+              countBy(
+                wines
+                  .flatMap((wine) => wine.grapes || [])
+                  .map((grape) => grape.toLowerCase()),
+              ),
+            ),
+            ([, count]) => count,
+            "desc",
+          ).map(([grape]) => grape)}
+          selected={filters.grape}
+          onSelect={(grape) => handleFilterChange("grape", grape)}
+          className="is-dark"
+        />
       </div>
 
       <div className="columns is-multiline is-mobile">

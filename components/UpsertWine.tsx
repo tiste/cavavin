@@ -80,7 +80,11 @@ export function UpsertWine({
   }
 
   async function refreshWines() {
-    if (!confirm("Êtes-vous sûr de vouloir rafraîchir les vins ?")) {
+    if (
+      !confirm(
+        "Cela va rafraîchir les vins avec les données de Vivino. Êtes-vous sûr ?",
+      )
+    ) {
       return;
     }
 
