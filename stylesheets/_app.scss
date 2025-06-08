@@ -2,7 +2,11 @@
 @use "_variables" as var;
 
 .is-bordered {
-  border: 1px solid white;
+  border: 2px solid white;
+
+  &.is-light {
+    border-color: var.$primary;
+  }
 }
 
 .checkbox {

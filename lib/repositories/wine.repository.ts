@@ -24,7 +24,13 @@ export class WineRepository {
       .sort({ createdAt: -1 })
       .toArray();
 
-    return wines.map((wine) => this.mapWine(wine));
+    return wines
+      .map((wine) => this.mapWine(wine))
+      .sort((a, b) => {
+        if ((a.quantity || 0) === 0 && (b.quantity || 0) !== 0) return 1;
+        if ((a.quantity || 0) !== 0 && (b.quantity || 0) === 0) return -1;
+        return 0;
+      });
   }
 
   async getOne(id: string): Promise<Wine | null> {
@@ -49,7 +55,7 @@ export class WineRepository {
 
     await this.mongo.db.collection<Wine>("wines").insertOne({
       ...wine,
-      quantity: wine.quantity || 0,
+      quantity: wine.quantity || 1,
       id: nanoid(),
       createdAt: new Date() as unknown as string,
       updatedAt: new Date() as unknown as string,
@@ -93,7 +99,13 @@ export class WineRepository {
   }
 
   private async getWineFromUrl(url: string): Promise<Partial<Wine> | null> {
-    const response = await fetch(url);
+    const fullUrl = "http" + (url.split("http")[1] || "");
+
+    const response = await fetch(fullUrl, {
+      headers: {
+        "Accept-Language": "fr",
+      },
+    });
     if (!response.ok) {
       throw new Error("Failed to fetch wine from URL");
     }
@@ -109,7 +121,8 @@ export class WineRepository {
     return {
       name: pageInformation.vintage.wine.name,
       year: pageInformation.vintage.year,
-      url: url,
+      url: fullUrl,
+      estimatedPrice: pageInformation.price?.amount || null,
       tastes: (pageInformation.tastes?.flavor || [])
         .filter(
           (_: { primary_keywords: { name: string }[] }, i: number) => i < 3,

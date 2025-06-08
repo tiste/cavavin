@@ -12,6 +12,21 @@ export function isStructureMatch(
   return false;
 }
 
+export function getTagCounts(
+  wines: Array<Wine>,
+  getKey: (wine: Wine) => string | undefined | null,
+): Record<string, number> {
+  return wines.reduce(
+    (acc, wine) => {
+      const key = getKey(wine);
+      if (!key) return acc;
+      acc[key] = (acc[key] || 0) + (wine.quantity || 0);
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
+}
+
 const normalize = (str: string) =>
   str
     .toLowerCase()
@@ -40,6 +55,12 @@ export function filterWines(wine: Wine, filters: Search) {
       !wine.foods ||
       !wine.foods.some((food) => normalize(food) === normalize(filters.food))
     ) {
+      return false;
+    }
+  }
+
+  if (filters.location) {
+    if (!wine.location || wine.location !== filters.location) {
       return false;
     }
   }

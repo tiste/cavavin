@@ -6,8 +6,8 @@ import { useEffect, useState } from "react";
 import placeholderImage from "@/public/placeholder.png";
 import { Progress } from "@/components/Progress";
 import { Search } from "@/domain/search";
-import { filterWines } from "@/lib/search";
-import { countBy, orderBy, toPairs } from "lodash";
+import { filterWines, getTagCounts } from "@/lib/search";
+import { countBy, isEmpty, orderBy, toPairs } from "lodash";
 import { ShowMoreTags } from "@/components/ShowMoreTags";
 
 const initialState: Search = {
@@ -15,6 +15,7 @@ const initialState: Search = {
   food: "",
   grape: "",
   taste: "",
+  location: "",
   sweetness: null,
   tannin: null,
   acidity: null,
@@ -62,7 +63,7 @@ export default function Home() {
 
   return (
     <div>
-      <section className="hero">
+      <section className="hero is-small">
         <div className="hero-body has-text-centered">
           <nav className="level is-mobile">
             <div className="level-item has-text-centered">
@@ -89,6 +90,19 @@ export default function Home() {
                     .toFixed(2)}{" "}
                   €
                 </p>
+                <p className="title is-size-7">
+                  est.{" "}
+                  {filteredWines
+                    .reduce(
+                      (acc, wine) =>
+                        acc +
+                        (wine.estimatedPrice || wine.price || 0) *
+                          (wine.quantity || 0),
+                      0,
+                    )
+                    .toFixed(2)}{" "}
+                  €
+                </p>
               </div>
             </div>
           </nav>
@@ -101,7 +115,11 @@ export default function Home() {
             className="input"
             type="text"
             placeholder="Rechercher un vin..."
+            autoCorrect="off"
             value={filters.search}
+            onFocus={(e) => {
+              e.target.scrollIntoView({ behavior: "smooth", block: "start" });
+            }}
             onChange={(e) => handleFilterChange("search", e.target.value)}
           />
         </div>
@@ -120,7 +138,18 @@ export default function Home() {
       <div className="tags">
         <ShowMoreTags
           tags={orderBy(
-            toPairs(countBy(wines, (wine) => wine.color?.toLowerCase())),
+            toPairs(getTagCounts(wines, (wine) => wine.location)),
+            ([, count]) => count,
+            "desc",
+          ).map(([location]) => location)}
+          selected={filters.location}
+          onSelect={(location) => handleFilterChange("location", location)}
+          className="is-primary is-light"
+        />
+
+        <ShowMoreTags
+          tags={orderBy(
+            toPairs(getTagCounts(wines, (wine) => wine.color?.toLowerCase())),
             ([, count]) => count,
             "desc",
           ).map(([color]) => color)}
@@ -320,7 +349,21 @@ export default function Home() {
                       <p>
                         <strong>Prix : </strong>
                         {wine.price ? `${wine.price} €` : "N/A"}
+                        <i>
+                          {" "}
+                          (est.{" "}
+                          {wine.estimatedPrice
+                            ? `${wine.estimatedPrice} €`
+                            : "N/A"}
+                          )
+                        </i>
                       </p>
+                      {!isEmpty(wine.location) && (
+                        <p>
+                          <strong>Emplacement : </strong>
+                          {wine.location}
+                        </p>
+                      )}
                       <p>
                         <strong>Appellation : </strong>
                         {wine.winery}

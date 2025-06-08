@@ -130,6 +130,7 @@ export function UpsertWine({
               <label className="label">Lien</label>
               <div className="control">
                 <input
+                  autoFocus={!form.id}
                   className="input"
                   name="url"
                   value={form.url || ""}
@@ -146,6 +147,7 @@ export function UpsertWine({
                     <input
                       className="input"
                       type="number"
+                      step="1"
                       name="quantity"
                       value={form.quantity || ""}
                       onChange={(e) =>
@@ -155,15 +157,28 @@ export function UpsertWine({
                   </div>
                 </div>
 
-                <div className="field">
-                  <label className="label">Nom</label>
-                  <div className="control">
+                <div className="field is-grouped">
+                  <div className="control is-expanded">
+                    <label className="label">Nom</label>
                     <input
                       className="input"
                       name="name"
                       value={form.name || ""}
                       onChange={(e) =>
                         handleChange(e.target.name, e.target.value)
+                      }
+                    />
+                  </div>
+
+                  <div className="control is-expanded">
+                    <label className="label">Millésime</label>
+                    <input
+                      className="input"
+                      type="number"
+                      name="year"
+                      value={form.year || ""}
+                      onChange={(e) =>
+                        handleChange(e.target.name, Number(e.target.value))
                       }
                     />
                   </div>
@@ -198,9 +213,9 @@ export function UpsertWine({
                   </div>
                 </div>
 
-                <div className="field">
-                  <label className="label">Prix (€)</label>
-                  <div className="control">
+                <div className="field is-grouped">
+                  <div className="control is-expanded">
+                    <label className="label">Prix (€)</label>
                     <input
                       className="input"
                       type="number"
@@ -209,6 +224,34 @@ export function UpsertWine({
                       value={form.price || ""}
                       onChange={(e) =>
                         handleChange(e.target.name, Number(e.target.value))
+                      }
+                    />
+                  </div>
+                  <div className="control is-expanded">
+                    <label className="label">Prix estimé (€)</label>
+                    <input
+                      className="input"
+                      type="number"
+                      step="0.01"
+                      name="estimatedPrice"
+                      value={form.estimatedPrice || ""}
+                      onChange={(e) =>
+                        handleChange(e.target.name, Number(e.target.value))
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="field">
+                  <label className="label">Emplacement</label>
+                  <div className="control">
+                    <input
+                      className="input"
+                      type="text"
+                      name="location"
+                      value={form.location || ""}
+                      onChange={(e) =>
+                        handleChange(e.target.name, e.target.value)
                       }
                     />
                   </div>
@@ -223,21 +266,6 @@ export function UpsertWine({
                       value={form.winery || ""}
                       onChange={(e) =>
                         handleChange(e.target.name, e.target.value)
-                      }
-                    />
-                  </div>
-                </div>
-
-                <div className="field">
-                  <label className="label">Millésime</label>
-                  <div className="control">
-                    <input
-                      className="input"
-                      type="number"
-                      name="year"
-                      value={form.year || ""}
-                      onChange={(e) =>
-                        handleChange(e.target.name, Number(e.target.value))
                       }
                     />
                   </div>

@@ -11,11 +11,7 @@ export function Nav() {
   }
 
   return (
-    <nav
-      className="navbar is-fixed-top"
-      role="navigation"
-      aria-label="main navigation"
-    >
+    <nav className="navbar" role="navigation" aria-label="main navigation">
       <div className="container">
         <div className="navbar-brand">
           <a className="navbar-item title has-text-primary mb-0" href="/">

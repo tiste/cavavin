@@ -2,7 +2,7 @@ import React, { useState } from "react";
 
 interface ShowMoreTagsProps {
   tags: string[];
-  selected: string;
+  selected?: string | null | number;
   onSelect: (tag: string) => void;
   className?: string;
 }

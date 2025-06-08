@@ -4,9 +4,11 @@ export interface Wine {
   quantity: number;
   name?: string | null;
   description?: string | null;
+  location?: string | null;
   region?: string | null;
   year?: number | null;
   price?: number | null;
+  estimatedPrice?: number | null;
   imageUrl?: string | null;
   rating?: number | null;
   winery?: string | null;

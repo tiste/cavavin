@@ -3,6 +3,7 @@ export interface Search {
   food: string;
   grape: string;
   taste: string;
+  location: string;
   sweetness: null | boolean;
   tannin: null | boolean;
   acidity: null | boolean;
