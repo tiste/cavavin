@@ -3,12 +3,12 @@
 import { UpsertWine } from "@/components/UpsertWine";
 import { Wine } from "@/domain/wine";
 import { useEffect, useState } from "react";
-import placeholderImage from "@/public/placeholder.png";
 import { Progress } from "@/components/Progress";
 import { Search } from "@/domain/search";
 import { filterWines, getTagCounts } from "@/lib/search";
 import { countBy, isEmpty, orderBy, toPairs } from "lodash";
 import { ShowMoreTags } from "@/components/ShowMoreTags";
+import { getPlaceholder } from "@/lib/placeholder";
 
 const initialState: Search = {
   color: "",
@@ -323,7 +323,7 @@ export default function Home() {
                 <div className="columns is-mobile">
                   <div className="column is-3">
                     <img
-                      src={wine.imageUrl || placeholderImage.src}
+                      src={wine.imageUrl || getPlaceholder(wine)}
                       alt={wine.name || ""}
                     />
                   </div>

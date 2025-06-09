@@ -288,14 +288,21 @@ export function UpsertWine({
                 <div className="field">
                   <label className="label">Couleur</label>
                   <div className="control">
-                    <input
-                      className="input"
-                      name="color"
-                      value={form.color || ""}
-                      onChange={(e) =>
-                        handleChange(e.target.name, e.target.value)
-                      }
-                    />
+                    <div className="select is-fullwidth">
+                      <select
+                        name="color"
+                        value={form.color || ""}
+                        onChange={(e) =>
+                          handleChange(e.target.name, e.target.value)
+                        }
+                      >
+                        <option value="">Sélectionner</option>
+                        <option value="Champagne">Champagne</option>
+                        <option value="Rosé">Rosé</option>
+                        <option value="Rouge">Rouge</option>
+                        <option value="Blanc">Blanc</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
 
