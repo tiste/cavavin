@@ -35,6 +35,17 @@ export default function Page() {
           </div>
         </div>
       </form>
+
+      <hr />
+
+      <div className="has-text-centered">
+        <script async src="https://js.stripe.com/v3/buy-button.js"></script>
+        {/*// @ts-ignore*/}
+        <stripe-buy-button
+          buy-button-id="buy_btn_1RXzLSARpXColXNrRzqbZZH9"
+          publishable-key="pk_live_51RXyuoARpXColXNrpvNsw0lWjhsJBJ9TnqzIM4o2lSjFXVbeA2IWrGCHI6I0T7K5bsOVRB6npcDHZdhVTCl7gMBV00OecHOQI5"
+        />
+      </div>
     </section>
   );
 }
