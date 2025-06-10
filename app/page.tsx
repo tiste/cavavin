@@ -364,6 +364,12 @@ export default function Home() {
                           {wine.location}
                         </p>
                       )}
+                      {wine.apogee && (
+                        <p>
+                          <strong>Apogée : </strong>
+                          {wine.apogee}
+                        </p>
+                      )}
                       <p>
                         <strong>Appellation : </strong>
                         {wine.winery}

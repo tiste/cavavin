@@ -29,6 +29,7 @@ export function getTagCounts(
 
 const normalize = (str: string) =>
   str
+    .trim()
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
@@ -40,7 +41,9 @@ export function filterWines(wine: Wine, filters: Search) {
       (wine.name && normalize(wine.name).includes(searchNorm)) ||
       (wine.description && normalize(wine.description).includes(searchNorm)) ||
       (wine.region && normalize(wine.region).includes(searchNorm)) ||
-      (wine.winery && normalize(wine.winery).includes(searchNorm));
+      (wine.winery && normalize(wine.winery).includes(searchNorm)) ||
+      (wine.year && String(wine.year).includes(searchNorm)) ||
+      (wine.apogee && String(wine.apogee).includes(searchNorm));
     if (!inFields) return false;
   }
 

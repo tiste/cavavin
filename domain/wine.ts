@@ -7,6 +7,7 @@ export interface Wine {
   location?: string | null;
   region?: string | null;
   year?: number | null;
+  apogee?: number | null;
   price?: number | null;
   estimatedPrice?: number | null;
   imageUrl?: string | null;

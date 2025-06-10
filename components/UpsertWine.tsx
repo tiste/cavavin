@@ -12,6 +12,7 @@ export function UpsertWine({
 }) {
   const [form, setForm] = useState<Partial<Wine>>(wine || {});
   const [isLoading, setIsLoading] = useState(false);
+  const [isAILoading, setIsAILoading] = useState(false);
   const [displayModal, setDisplayModal] = useState(false);
 
   function handleChange(
@@ -25,6 +26,29 @@ export function UpsertWine({
     } else {
       setForm((f) => ({ ...f, [name]: value }));
     }
+  }
+
+  async function fetchApogee(wine: Partial<Wine>) {
+    if (!wine || !wine.name || !wine.winery || !wine.year) {
+      return;
+    }
+
+    setIsAILoading(true);
+    const response = await fetch("/api/ai", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(wine),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      setForm((f) => ({ ...f, apogee: data.answer }));
+    } else {
+      console.error("Failed to fetch apogee");
+    }
+    setIsAILoading(false);
   }
 
   async function handleSubmit(
@@ -50,13 +74,12 @@ export function UpsertWine({
             setForm({});
           }
           setDisplayModal(false);
-          setIsLoading(false);
         });
       }
     } else {
       console.error("Failed to delete wine");
-      setIsLoading(false);
     }
+    setIsLoading(false);
   }
 
   async function deleteWine(id: string) {
@@ -70,13 +93,12 @@ export function UpsertWine({
         onSubmit().then(() => {
           setForm({});
           setDisplayModal(false);
-          setIsLoading(false);
         });
       }
     } else {
       console.error("Failed to delete wine");
-      setIsLoading(false);
     }
+    setIsLoading(false);
   }
 
   async function refreshWines() {
@@ -95,12 +117,11 @@ export function UpsertWine({
     if (response.ok) {
       if (onSubmit) {
         onSubmit();
-        setIsLoading(false);
       }
     } else {
       console.error("Failed to delete wine");
-      setIsLoading(false);
     }
+    setIsLoading(false);
   }
 
   const debouncedHandleQuantityChange = useMemo(
@@ -125,7 +146,7 @@ export function UpsertWine({
       <div className="modal-background"></div>
       <div className="modal-card">
         <section className="modal-card-body">
-          <form>
+          <form onSubmit={(e) => e.preventDefault()}>
             <div className="field">
               <label className="label">Lien</label>
               <div className="control">
@@ -157,9 +178,9 @@ export function UpsertWine({
                   </div>
                 </div>
 
-                <div className="field is-grouped">
-                  <div className="control is-expanded">
-                    <label className="label">Nom</label>
+                <div className="field">
+                  <label className="label">Nom</label>
+                  <div className="control">
                     <input
                       className="input"
                       name="name"
@@ -169,7 +190,9 @@ export function UpsertWine({
                       }
                     />
                   </div>
+                </div>
 
+                <div className="field is-grouped">
                   <div className="control is-expanded">
                     <label className="label">Millésime</label>
                     <input
@@ -181,6 +204,34 @@ export function UpsertWine({
                         handleChange(e.target.name, Number(e.target.value))
                       }
                     />
+                  </div>
+
+                  <div className="control">
+                    <label className="label">Apogée</label>
+
+                    <div className="field has-addons">
+                      <div className="control">
+                        <input
+                          className="input"
+                          type="number"
+                          name="apogee"
+                          value={form.apogee || ""}
+                          onChange={(e) =>
+                            handleChange(e.target.name, Number(e.target.value))
+                          }
+                        />
+                      </div>
+                      <div className="control">
+                        <button
+                          className={
+                            "button " + (isAILoading ? " is-loading" : "")
+                          }
+                          onClick={() => fetchApogee(form)}
+                        >
+                          Apogée AI
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
