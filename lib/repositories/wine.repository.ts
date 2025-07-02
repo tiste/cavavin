@@ -143,7 +143,7 @@ export class WineRepository {
       imageUrl: pageInformation.vintage.image.variations.bottle_medium
         ? "https:" + pageInformation.vintage.image.variations.bottle_medium
         : null,
-      color: pageInformation.vintage.wine.style.wine_type_id
+      color: pageInformation.vintage.wine.style?.wine_type_id
         ? pageInformation.vintage.wine.style.wine_type_id === 1
           ? "Rouge"
           : pageInformation.vintage.wine.style.wine_type_id === 2
