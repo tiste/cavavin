@@ -47,6 +47,7 @@ export function UpsertWine({
       setForm((f) => ({ ...f, apogee: data.answer }));
     } else {
       console.error("Failed to fetch apogee");
+      alert("Échec de la récupération de l'apogée via l'IA.");
     }
     setIsAILoading(false);
   }
@@ -78,6 +79,7 @@ export function UpsertWine({
       }
     } else {
       console.error("Failed to delete wine");
+      alert("Échec de la sauvegarde du vin.");
     }
     setIsLoading(false);
   }
