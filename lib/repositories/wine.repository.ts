@@ -63,8 +63,15 @@ export class WineRepository {
     return this.mapWine(wine);
   }
 
-  async create(wine: Wine) {
-    if (Object.keys(wine).length === 1 && wine.url) {
+  async create(wine: Wine & { htmlDom?: string }) {
+    if (wine.htmlDom) {
+      const wineData = this.parseWineHtmlContent(wine.htmlDom, wine.url);
+      wine = {
+        ...wine,
+        ...wineData,
+      };
+      delete wine.htmlDom;
+    } else if (Object.keys(wine).length === 1 && wine.url) {
       const wineData = await this.getWineFromUrl(wine.url);
 
       if (!wineData) {
@@ -88,7 +95,15 @@ export class WineRepository {
     });
   }
 
-  async update(id: string, { updatedAt: _, ...wine }: Wine) {
+  async update(id: string, { updatedAt: _, ...wine }: any) {
+    if (wine.htmlDom) {
+      const wineData = this.parseWineHtmlContent(wine.htmlDom, wine.url);
+      wine = {
+        ...wine,
+        ...wineData,
+      };
+      delete wine.htmlDom;
+    }
     await this.mongo.db.collection<Wine>("wines").updateOne(
       {
         id: id,
@@ -122,6 +137,72 @@ export class WineRepository {
     });
 
     await Promise.all(updates);
+  }
+
+  private parseWineHtmlContent(
+    html: string,
+    url: string,
+  ): Partial<Wine> | null {
+    try {
+      const jsonPattern =
+        /<script[^>]*type="application\/json"[^>]*data-component-name="WinePageTopSection"[^>]*>([\s\S]*?)<\/script>/i;
+      const match = html.match(jsonPattern);
+      if (!match) {
+        console.warn(
+          `⚠ Aucune donnée WinePageTopSection trouvée dans le HTML fourni.`,
+        );
+        return null;
+      }
+      const data = JSON.parse(match[1].trim());
+      const pageInformation = data.pageInformation;
+      return {
+        name: pageInformation.vintage.wine.name,
+        year: pageInformation.vintage.year,
+        url: url,
+        estimatedPrice: pageInformation.price?.amount || null,
+        tastes: (pageInformation.tastes?.flavor || [])
+          .filter(
+            (_: { primary_keywords: { name: string }[] }, i: number) => i < 3,
+          )
+          .flatMap((f: { primary_keywords: { name: string }[] }) =>
+            (f.primary_keywords || [])
+              .filter((_, i) => i < 3)
+              .flatMap((k) => k.name),
+          ),
+        foods: (pageInformation.wine?.foods || []).flatMap(
+          (f: { name: string }) => f.name,
+        ),
+        region: pageInformation.vintage.wine.region.name,
+        winery: pageInformation.vintage.wine.winery.name,
+        grapes: (pageInformation.vintage?.grapes || []).flatMap(
+          (g: { name: string }) => g.name,
+        ),
+        imageUrl: pageInformation.vintage.image.variations.bottle_medium
+          ? "https:" + pageInformation.vintage.image.variations.bottle_medium
+          : null,
+        color: pageInformation.vintage.wine.style?.wine_type_id
+          ? pageInformation.vintage.wine.style.wine_type_id === 1
+            ? "Rouge"
+            : pageInformation.vintage.wine.style.wine_type_id === 2
+              ? "Blanc"
+              : pageInformation.vintage.wine.style.wine_type_id === 3
+                ? "Champagne"
+                : pageInformation.vintage.wine.style.wine_type_id === 4
+                  ? "Rosé"
+                  : null
+          : null,
+        structure: {
+          acidity: pageInformation.tastes?.structure?.acidity || null,
+          fizziness: pageInformation.tastes?.structure?.fizziness || null,
+          intensity: pageInformation.tastes?.structure?.intensity || null,
+          sweetness: pageInformation.tastes?.structure?.sweetness || null,
+          tannin: pageInformation.tastes?.structure?.tannin || null,
+        },
+      };
+    } catch (e) {
+      console.error("Erreur lors du parsing du HTML Vivino :", e);
+      return null;
+    }
   }
 
   private async getWineFromUrl(
@@ -184,64 +265,7 @@ export class WineRepository {
         return null;
       }
 
-      const jsonPattern =
-        /<script[^>]*type="application\/json"[^>]*data-component-name="WinePageTopSection"[^>]*>([\s\S]*?)<\/script>/i;
-      const match = html.match(jsonPattern);
-
-      if (!match) {
-        console.warn(
-          `⚠ Aucune donnée WinePageTopSection trouvée pour: ${fullUrl}`,
-        );
-        return null;
-      }
-
-      const data = JSON.parse(match[1].trim());
-
-      const pageInformation = data.pageInformation;
-      return {
-        name: pageInformation.vintage.wine.name,
-        year: pageInformation.vintage.year,
-        url: fullUrl,
-        estimatedPrice: pageInformation.price?.amount || null,
-        tastes: (pageInformation.tastes?.flavor || [])
-          .filter(
-            (_: { primary_keywords: { name: string }[] }, i: number) => i < 3,
-          )
-          .flatMap((f: { primary_keywords: { name: string }[] }) =>
-            (f.primary_keywords || [])
-              .filter((_, i) => i < 3)
-              .flatMap((k) => k.name),
-          ),
-        foods: (pageInformation.wine?.foods || []).flatMap(
-          (f: { name: string }) => f.name,
-        ),
-        region: pageInformation.vintage.wine.region.name,
-        winery: pageInformation.vintage.wine.winery.name,
-        grapes: (pageInformation.vintage?.grapes || []).flatMap(
-          (g: { name: string }) => g.name,
-        ),
-        imageUrl: pageInformation.vintage.image.variations.bottle_medium
-          ? "https:" + pageInformation.vintage.image.variations.bottle_medium
-          : null,
-        color: pageInformation.vintage.wine.style?.wine_type_id
-          ? pageInformation.vintage.wine.style.wine_type_id === 1
-            ? "Rouge"
-            : pageInformation.vintage.wine.style.wine_type_id === 2
-              ? "Blanc"
-              : pageInformation.vintage.wine.style.wine_type_id === 3
-                ? "Champagne"
-                : pageInformation.vintage.wine.style.wine_type_id === 4
-                  ? "Rosé"
-                  : null
-          : null,
-        structure: {
-          acidity: pageInformation.tastes?.structure?.acidity || null,
-          fizziness: pageInformation.tastes?.structure?.fizziness || null,
-          intensity: pageInformation.tastes?.structure?.intensity || null,
-          sweetness: pageInformation.tastes?.structure?.sweetness || null,
-          tannin: pageInformation.tastes?.structure?.tannin || null,
-        },
-      };
+      return this.parseWineHtmlContent(html, fullUrl);
     } catch (error: any) {
       if (error.name === "AbortError" || error.name === "TimeoutError") {
         console.warn(`⏱ Timeout pour: ${fullUrl}`);

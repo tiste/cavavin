@@ -1,19 +1,20 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { Wine } from "@/domain/wine";
 import { debounce } from "lodash";
 
 export function UpsertWine({
   wine,
-  onSubmit,
+  onSubmitAction,
 }: {
   wine?: Wine;
-  onSubmit?: () => Promise<void>;
+  onSubmitAction?: () => Promise<void>;
 }) {
   const [form, setForm] = useState<Partial<Wine>>(wine || {});
   const [isLoading, setIsLoading] = useState(false);
   const [isAILoading, setIsAILoading] = useState(false);
   const [displayModal, setDisplayModal] = useState(false);
+  const [htmlDom, setHtmlDom] = useState("");
 
   function handleChange(
     name: string,
@@ -52,37 +53,41 @@ export function UpsertWine({
     setIsAILoading(false);
   }
 
-  async function handleSubmit(
-    wine: Partial<Wine>,
-    e?: React.MouseEvent<HTMLButtonElement>,
-  ) {
-    if (e) {
-      e.preventDefault();
-    }
-    setIsLoading(true);
-    const response = await fetch(`/api/wines${wine.id ? "/" + wine.id : ""}`, {
-      method: wine.id ? "PUT" : "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(wine),
-    });
-
-    if (response.ok) {
-      if (onSubmit) {
-        onSubmit().then(() => {
-          if (!wine.id) {
-            setForm({});
-          }
-          setDisplayModal(false);
-        });
+  const handleSubmit = useCallback(
+    async (wine: Partial<Wine>, e?: React.MouseEvent<HTMLButtonElement>) => {
+      if (e) {
+        e.preventDefault();
       }
-    } else {
-      console.error("Failed to delete wine");
-      alert("Échec de la sauvegarde du vin.");
-    }
-    setIsLoading(false);
-  }
+      setIsLoading(true);
+      const body = htmlDom ? { ...wine, htmlDom } : wine;
+      const response = await fetch(
+        `/api/wines${wine.id ? "/" + wine.id : ""}`,
+        {
+          method: wine.id ? "PUT" : "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(body),
+        },
+      );
+
+      if (response.ok) {
+        if (onSubmitAction) {
+          onSubmitAction().then(() => {
+            if (!wine.id) {
+              setForm({});
+            }
+            setDisplayModal(false);
+          });
+        }
+      } else {
+        console.error("Failed to delete wine");
+        alert("Échec de la sauvegarde du vin.");
+      }
+      setIsLoading(false);
+    },
+    [onSubmitAction, htmlDom],
+  );
 
   async function deleteWine(id: string) {
     setIsLoading(true);
@@ -91,8 +96,8 @@ export function UpsertWine({
     });
 
     if (response.ok) {
-      if (onSubmit) {
-        onSubmit().then(() => {
+      if (onSubmitAction) {
+        onSubmitAction().then(() => {
           setForm({});
           setDisplayModal(false);
         });
@@ -117,8 +122,8 @@ export function UpsertWine({
       method: "POST",
     });
     if (response.ok) {
-      if (onSubmit) {
-        onSubmit();
+      if (onSubmitAction) {
+        onSubmitAction();
       }
     } else {
       console.error("Failed to delete wine");
@@ -134,7 +139,7 @@ export function UpsertWine({
           quantity: quantity,
         });
       }, 1000),
-    [],
+    [handleSubmit],
   );
 
   function handleQuantityChange(quantity: number) {
@@ -158,6 +163,22 @@ export function UpsertWine({
                   name="url"
                   value={form.url || ""}
                   onChange={(e) => handleChange(e.target.name, e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="field">
+              <label className="label">
+                HTML DOM (coller le code source de Vivino ici)
+              </label>
+              <div className="control">
+                <textarea
+                  className="textarea"
+                  name="htmlDom"
+                  value={htmlDom}
+                  onChange={(e) => setHtmlDom(e.target.value)}
+                  placeholder="Collez ici le HTML de la page Vivino..."
+                  rows={5}
                 />
               </div>
             </div>

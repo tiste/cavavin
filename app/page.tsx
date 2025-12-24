@@ -444,7 +444,7 @@ export default function Home() {
                       </div>
                     </div>
 
-                    <UpsertWine wine={wine} onSubmit={fetchWines} />
+                    <UpsertWine wine={wine} onSubmitAction={fetchWines} />
 
                     <p className="is-size-7 has-text-right">
                       Dernière mise à jour :{" "}

@@ -40,7 +40,7 @@ export function Nav() {
           <div className="navbar-end">
             <div className="navbar-item">
               <UpsertWine
-                onSubmit={() => {
+                onSubmitAction={() => {
                   window.location.reload();
                   return Promise.resolve();
                 }}
