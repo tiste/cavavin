@@ -315,7 +315,16 @@ export default function Home() {
             <div className="card">
               <div className="card-content">
                 <h2 className="title is-4">
-                  <a href={wine.url} target="_blank" rel="noopener noreferrer">
+                  <a
+                    href={wine.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={
+                      (wine.quantity || 0) === 0
+                        ? { textDecoration: "line-through" }
+                        : {}
+                    }
+                  >
                     {wine.name} {wine.year} ({wine.quantity})
                   </a>
                 </h2>
