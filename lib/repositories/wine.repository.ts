@@ -205,76 +205,130 @@ export class WineRepository {
     }
   }
 
-  private async getWineFromUrl(
-    url: string,
-    retryCount: number = 0,
-  ): Promise<Partial<Wine> | null> {
-    const fullUrl = "http" + (url.split("http")[1] || "");
-    const maxRetries = 5;
-
-    if (retryCount > 0) {
-      const retryDelay = this.getRandomDelay(3000, 8000);
-      console.log(
-        `⏱ Retry ${retryCount}/${maxRetries} après ${retryDelay}ms...`,
-      );
-      await this.sleep(retryDelay);
-    } else {
-      await this.sleep(this.getRandomDelay(500, 1500));
+  private parseVivinoVintageId(input: string): { vintageId: string | null; cleanUrl: string | null } {
+    const urlMatch = input.match(/https?:\/\/(?:www\.)?vivino\.com\/\S+/);
+    if (!urlMatch) {
+      console.warn(`[Vivino] Aucune URL Vivino trouvée dans: "${input}"`);
+      return { vintageId: null, cleanUrl: null };
     }
 
     try {
-      const response = await fetch(fullUrl, {
-        headers: {
-          Accept:
-            "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-          "Accept-Language": "fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7",
-          "Accept-Encoding": "gzip, deflate, br",
-          "User-Agent": this.getRandomUserAgent(),
-        },
-        redirect: "follow",
-        signal: AbortSignal.timeout(15000),
-      });
-
-      if (!response.ok) {
-        if (response.status === 429 || response.status === 503) {
-          if (retryCount < maxRetries) {
-            console.warn(
-              `⚠ HTTP ${response.status} - tentative ${retryCount + 1}/${maxRetries}`,
-            );
-            return this.getWineFromUrl(url, retryCount + 1);
-          }
-        }
-        throw new Error(
-          `Failed to fetch wine from URL: ${response.status} ${response.statusText}`,
-        );
+      const parsed = new URL(urlMatch[0]);
+      const match = parsed.pathname.match(/^\/wines\/(\d+)/);
+      if (!match) {
+        console.warn(`[Vivino] Format d'URL non supporté (attendu /wines/{id}): ${urlMatch[0]}`);
+        return { vintageId: null, cleanUrl: null };
       }
+      const cleanUrl = `${parsed.origin}${parsed.pathname}`;
+      return { vintageId: match[1], cleanUrl };
+    } catch (e) {
+      console.error(`[Vivino] Impossible de parser l'URL: ${urlMatch[0]}`, e);
+      return { vintageId: null, cleanUrl: null };
+    }
+  }
 
-      const html = await response.text();
+  private async getWineFromUrl(url: string): Promise<Partial<Wine> | null> {
+    const { vintageId, cleanUrl } = this.parseVivinoVintageId(url);
 
-      if (
-        html.includes("challenge.js") ||
-        html.includes("awswaf.com") ||
-        html.includes("cf-challenge") ||
-        html.includes("Just a moment")
-      ) {
-        console.warn(`🛡 WAF challenge détecté pour: ${fullUrl}`);
+    if (!vintageId || !cleanUrl) {
+      return null;
+    }
 
-        if (retryCount < maxRetries) {
-          return this.getWineFromUrl(url, retryCount + 1);
-        }
+    const apiHeaders = {
+      "User-Agent": this.getRandomUserAgent(),
+      "Accept-Language": "fr-FR,fr;q=0.9",
+    };
+
+    try {
+      console.log(`[Vivino] Fetching vintage ${vintageId}...`);
+      const res = await fetch(
+        `https://www.vivino.com/api/vintages/${vintageId}`,
+        { headers: apiHeaders, signal: AbortSignal.timeout(10000) },
+      );
+
+      if (!res.ok) {
+        console.error(`[Vivino] vintage ${vintageId}: HTTP ${res.status} ${res.statusText}`);
         return null;
       }
 
-      return this.parseWineHtmlContent(html, fullUrl);
-    } catch (error: any) {
-      if (error.name === "AbortError" || error.name === "TimeoutError") {
-        console.warn(`⏱ Timeout pour: ${fullUrl}`);
-        if (retryCount < maxRetries) {
-          return this.getWineFromUrl(url, retryCount + 1);
+      const data = await res.json();
+      const vintage = data.vintage;
+      console.log(`[Vivino] Vintage récupéré: ${vintage.name} (${vintage.year || "NV"})`);
+
+      let estimatedPrice: number | null = null;
+      try {
+        console.log(`[Vivino] Fetching price for vintage ${vintageId}...`);
+        const exploreRes = await fetch(
+          `https://www.vivino.com/api/explore/explore?vintage_ids[]=${vintageId}&min_rating=1`,
+          { headers: apiHeaders, signal: AbortSignal.timeout(10000) },
+        );
+        if (exploreRes.ok) {
+          const exploreData = await exploreRes.json();
+          const price = exploreData.explore_vintage?.matches?.[0]?.price;
+          estimatedPrice = price?.amount ?? null;
+          console.log(`[Vivino] Prix: ${estimatedPrice ?? "non disponible"}`);
+        } else {
+          console.warn(`[Vivino] Prix: HTTP ${exploreRes.status} ${exploreRes.statusText}`);
         }
+      } catch (e) {
+        console.warn(`[Vivino] Prix non récupéré:`, e);
       }
-      throw error;
+
+      return this.mapVivinoApiToWine(vintage, cleanUrl, estimatedPrice);
+    } catch (error: any) {
+      console.error(`[Vivino] Erreur pour vintage ${vintageId}:`, error);
+      return null;
     }
+  }
+
+  private mapVivinoApiToWine(
+    vintage: any,
+    url: string,
+    estimatedPrice: number | null,
+  ): Partial<Wine> {
+    const wine = vintage.wine || {};
+    const style = wine.style || {};
+    const structure = style.baseline_structure || {};
+
+    const typeId = style.wine_type_id ?? wine.type_id;
+    const color =
+      typeId === 1
+        ? "Rouge"
+        : typeId === 2
+          ? "Blanc"
+          : typeId === 3
+            ? "Champagne"
+            : typeId === 4
+              ? "Rosé"
+              : null;
+
+    const variations = vintage.image?.variations || {};
+    const imageUrl = variations.bottle_medium
+      || variations.bottle_large
+      || variations.large
+      || variations.medium
+      || null;
+
+    return {
+      name: wine.name,
+      year: vintage.year || null,
+      url,
+      estimatedPrice,
+      tastes: [],
+      foods: (wine.foods || []).map((f: { name: string }) => f.name),
+      region: wine.region?.name ?? null,
+      winery: wine.winery?.name ?? null,
+      grapes: (vintage.grapes || []).map((g: { name: string }) => g.name),
+      imageUrl: imageUrl ? "https:" + imageUrl : null,
+      color,
+      structure: {
+        acidity: structure.acidity ?? null,
+        fizziness: structure.fizziness ?? null,
+        intensity: structure.intensity ?? null,
+        sweetness: structure.sweetness ?? null,
+        tannin: structure.tannin ?? null,
+      },
+    };
   }
 
   private mapWine({ _id: _, ...wine }: WithId<Wine>): Wine {
@@ -292,11 +346,4 @@ export class WineRepository {
     return this.userAgents[Math.floor(Math.random() * this.userAgents.length)];
   }
 
-  private getRandomDelay(min: number = 2000, max: number = 5000): number {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-  }
-
-  private async sleep(ms: number): Promise<void> {
-    await new Promise((resolve) => setTimeout(resolve, ms));
-  }
 }
